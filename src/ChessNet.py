@@ -47,11 +47,15 @@ class OutBlock(nn.Module):
     
     def forward(self,s):
         v = torch.relu(self.bn(self.conv(s)))
-        v = v.view(-1, 8*8)
+        v = torch.view(-1, 8*8)
         v = torch.relu(self.fc1(v))
         v = torch.tanh(self.fc2(v))
         
-        return v
+        p = torch.relu(self.bn1(self.conv1(s)))
+        p = torch.view(-1, 8*8*128)
+        p = self.fc(p)
+        p = self.logsoftmax(p).exp()
+        return p, v
     
 class ChessNet(nn.Module):
     def __init__(self):
@@ -68,13 +72,15 @@ class ChessNet(nn.Module):
         s = self.outblock(s)
         return s
 
-class ValueLoss(nn.Module):
+class AlphaLoss(torch.nn.Module):
     def __init__(self):
-        super(ValueLoss, self).__init__()
+        super(AlphaLoss, self).__init__()
 
-    def forward(self, y_value, value):
+    def forward(self, y_value, value, y_policy, policy):
         value_error = (value - y_value) ** 2
-        return value_error
-
+        policy_error = torch.sum((-policy* 
+                                (1e-6 + y_policy.float()).float().log()), 1)
+        total_error = (value_error.view(-1).float() + policy_error).mean()
+        return total_error
 
 
