@@ -54,8 +54,8 @@ class Node:
         if self.visits == 0:
             return float('inf')
         
-        # heuristic = chessNet(boardToTensor(self.state.__str__())) 
-        return (self.wins / self.visits) + 1.4 * math.sqrt(2 * math.log(parent.visits) / self.visits)
+        heuristic = chessNet(boardToTensor(self.state.__str__())) 
+        return (self.wins / self.visits) + 1.4 * math.sqrt(2 * math.log(parent.visits) / self.visits) + 0.5 * heuristic.item()
 
     def expand(self):
         # print(f'expansion \n{self.state}')
